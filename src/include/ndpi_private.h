@@ -82,13 +82,15 @@ typedef struct default_ports_tree_node {
 
 #define LINE_ENDS(ndpi_int_one_line_struct, string_to_compare) \
   ((ndpi_int_one_line_struct).len >= strlen(string_to_compare) && \
-   memcmp((ndpi_int_one_line_struct).ptr + \
-          ((ndpi_int_one_line_struct).len - strlen(string_to_compare)), \
-          string_to_compare, strlen(string_to_compare)) == 0)
+   ndpi_strncasestr((const char *)((ndpi_int_one_line_struct).ptr) + \
+                    ((ndpi_int_one_line_struct).len - strlen(string_to_compare)), \
+                    string_to_compare, strlen(string_to_compare)) == \
+   (const char *)((ndpi_int_one_line_struct).ptr) + ((ndpi_int_one_line_struct).len - strlen(string_to_compare)))
 
 #define LINE_CMP(ndpi_int_one_line_struct, string_to_compare, string_to_compare_length) \
   ((ndpi_int_one_line_struct).ptr != NULL && \
-   memcmp((ndpi_int_one_line_struct).ptr, string_to_compare, string_to_compare_length) == 0)
+   ndpi_strncasestr((const char *)((ndpi_int_one_line_struct).ptr), string_to_compare, \
+                    string_to_compare_length) == (const char *)((ndpi_int_one_line_struct).ptr))
 
 #define NDPI_MAX_PARSE_LINES_PER_PACKET                         64
 
@@ -121,6 +123,7 @@ struct ndpi_packet_struct {
   struct ndpi_int_one_line_struct http_origin;
   struct ndpi_int_one_line_struct server_line;
   struct ndpi_int_one_line_struct http_method;
+  struct ndpi_int_one_line_struct upgrade_line;
   struct ndpi_int_one_line_struct http_response; /* the first "word" in this pointer is the
 						    response code in the packet (200, etc) */
 
@@ -168,6 +171,9 @@ struct ndpi_global_context {
 
   /* NDPI_PROTOCOL_MSTEAMS */
   struct ndpi_lru_cache *msteams_global_cache;
+  
+  /* FPC DNS cache */
+  struct ndpi_lru_cache *fpc_dns_global_cache;
 };
 
 #define CFG_MAX_LEN	256
@@ -195,6 +201,12 @@ struct ndpi_detection_module_config_struct {
   int libgcrypt_init;
   int guess_on_giveup;
   int compute_entropy;
+  int address_cache_size;
+  int fpc_enabled;
+  int guess_ip_before_port;
+  int use_client_ip_in_guess;
+  int use_client_port_in_guess;
+  int tcp_fingerprint_enabled;
   
   char filename_config[CFG_MAX_LEN];
 
@@ -220,15 +232,23 @@ struct ndpi_detection_module_config_struct {
   int msteams_cache_num_entries;
   int msteams_cache_ttl;
   int msteams_cache_scope;
-
+  int fpc_dns_cache_num_entries;
+  int fpc_dns_cache_ttl;
+  int fpc_dns_cache_scope;
+  
   /* Protocols */
 
   int tls_certificate_expire_in_x_days;
   int tls_app_blocks_tracking_enabled;
+  int tls_heuristics;
+  int tls_heuristics_max_packets;
   int tls_sha1_fingerprint_enabled;
-  int tls_ja3c_fingerprint_enabled;
   int tls_ja3s_fingerprint_enabled;
   int tls_ja4c_fingerprint_enabled;
+  int tls_ja4r_fingerprint_enabled;
+  int tls_subclassification_enabled;
+
+  int quic_subclassification_enabled;
 
   int smtp_opportunistic_tls_enabled;
 
@@ -237,6 +257,11 @@ struct ndpi_detection_module_config_struct {
   int pop_opportunistic_tls_enabled;
 
   int ftp_opportunistic_tls_enabled;
+
+  int sip_attribute_from_enabled;
+  int sip_attribute_from_imsi_enabled;
+  int sip_attribute_to_enabled;
+  int sip_attribute_to_imsi_enabled;
 
   int stun_opportunistic_tls_enabled;
   int stun_max_packets_extra_dissection;
@@ -250,6 +275,7 @@ struct ndpi_detection_module_config_struct {
   int dns_parse_response_enabled;
 
   int http_parse_response_enabled;
+  int http_subclassification_enabled;
 
   int ookla_aggressiveness;
 
@@ -257,8 +283,17 @@ struct ndpi_detection_module_config_struct {
 
   int rtp_search_for_stun;
 
+  int openvpn_heuristics;
+  int openvpn_heuristics_num_msgs;
+  int openvpn_subclassification_by_ip;
+
+  int wireguard_subclassification_by_ip;
+
   NDPI_PROTOCOL_BITMASK debug_bitmask;
   NDPI_PROTOCOL_BITMASK ip_list_bitmask;
+  NDPI_PROTOCOL_BITMASK monitoring;
+
+  NDPI_PROTOCOL_BITMASK flowrisk_bitmask;
 
   int flow_risk_lists_enabled;
   int risk_anonymous_subscriber_list_icloudprivaterelay_enabled;
@@ -316,7 +351,7 @@ struct ndpi_detection_module_struct {
    * update automa_type above
    */
 
-  ndpi_str_hash *malicious_ja3_hashmap, *malicious_sha1_hashmap;
+  ndpi_str_hash *malicious_ja4_hashmap, *malicious_sha1_hashmap;
 
   ndpi_list *trusted_issuer_dn;
 
@@ -326,11 +361,7 @@ struct ndpi_detection_module_struct {
   /* *** If you add a new Patricia tree, please update ptree_type above! *** */
 
   struct {
-#ifdef USE_LEGACY_AHO_CORASICK
-    ndpi_automa hostnames, hostnames_shadow;
-#else
     ndpi_domain_classify *sc_hostnames, *sc_hostnames_shadow;
-#endif
     void *ipAddresses, *ipAddresses_shadow; /* Patricia */
     void *ipAddresses6, *ipAddresses6_shadow; /* Patricia IPv6*/
     u_int8_t categories_loaded;
@@ -361,6 +392,9 @@ struct ndpi_detection_module_struct {
 
   /* NDPI_PROTOCOL_MSTEAMS */
   struct ndpi_lru_cache *msteams_cache;
+  
+  /* FPC DNS cache */
+  struct ndpi_lru_cache *fpc_dns_cache;
 
   /* *** If you add a new LRU cache, please update lru_cache_type above! *** */
 
@@ -377,7 +411,7 @@ struct ndpi_detection_module_struct {
 
   /* Current packet */
   struct ndpi_packet_struct packet;
-  const struct ndpi_flow_input_info *input_info;
+  struct ndpi_flow_input_info *input_info;
 
 #ifdef HAVE_NBPF
   u_int8_t num_nbpf_custom_proto;
@@ -387,6 +421,7 @@ struct ndpi_detection_module_struct {
   u_int16_t max_payload_track_len;
 
   ndpi_str_hash *public_domain_suffixes;
+  struct ndpi_address_cache *address_cache;
 };
 
 
@@ -533,10 +568,6 @@ struct ndpi_detection_module_struct {
 #define NDPI_SELECTION_BITMASK_PROTOCOL_V6_TCP_OR_UDP_WITH_PAYLOAD_WITHOUT_RETRANSMISSION	(NDPI_SELECTION_BITMASK_PROTOCOL_V6_TCP_OR_UDP | NDPI_SELECTION_BITMASK_PROTOCOL_NO_TCP_RETRANSMISSION | NDPI_SELECTION_BITMASK_PROTOCOL_HAS_PAYLOAD)
 #define NDPI_SELECTION_BITMASK_PROTOCOL_V4_V6_TCP_OR_UDP_WITH_PAYLOAD_WITHOUT_RETRANSMISSION	(NDPI_SELECTION_BITMASK_PROTOCOL_V4_V6_TCP_OR_UDP | NDPI_SELECTION_BITMASK_PROTOCOL_NO_TCP_RETRANSMISSION | NDPI_SELECTION_BITMASK_PROTOCOL_HAS_PAYLOAD)
 
-
-
-
-
 /* Generic */
 
 char *strptime(const char *s, const char *format, struct tm *tm);
@@ -578,7 +609,7 @@ u_int8_t is_a_common_alpn(struct ndpi_detection_module_struct *ndpi_str,
 
 int64_t asn1_ber_decode_length(const unsigned char *payload, int payload_len, u_int16_t *value_len);
 
-u_int8_t ips_match(u_int32_t src, u_int32_t dst,
+u_int8_t ndpi_ips_match(u_int32_t src, u_int32_t dst,
 		   u_int32_t net, u_int32_t num_bits);
 
 u_int8_t ends_with(struct ndpi_detection_module_struct *ndpi_struct,
@@ -588,9 +619,10 @@ u_int ndpi_search_tcp_or_udp_raw(struct ndpi_detection_module_struct *ndpi_struc
 				 struct ndpi_flow_struct *flow,
 				 u_int32_t saddr, u_int32_t daddr);
 
-u_int32_t ip_port_hash_funct(u_int32_t ip, u_int16_t port);
-
 char* ndpi_intoav4(unsigned int addr, char* buf, u_int16_t bufLen);
+char* ndpi_intoav6(struct ndpi_in6_addr *addr, char* buf, u_int16_t bufLen);
+  
+int is_flow_addr_informative(const struct ndpi_flow_struct *flow);
 
 u_int16_t icmp4_checksum(u_int8_t const * const buf, size_t len);
 
@@ -600,13 +632,21 @@ ndpi_risk_enum ndpi_network_risk_ptree_match(struct ndpi_detection_module_struct
 int load_protocols_file_fd(struct ndpi_detection_module_struct *ndpi_mod, FILE *fd);
 int load_categories_file_fd(struct ndpi_detection_module_struct *ndpi_str, FILE *fd, void *user_data);
 int load_malicious_sha1_file_fd(struct ndpi_detection_module_struct *ndpi_str, FILE *fd);
-int load_malicious_ja3_file_fd(struct ndpi_detection_module_struct *ndpi_str, FILE *fd);
+int load_malicious_ja4_file_fd(struct ndpi_detection_module_struct *ndpi_str, FILE *fd);
 int load_risk_domain_file_fd(struct ndpi_detection_module_struct *ndpi_str, FILE *fd);
 int load_config_file_fd(struct ndpi_detection_module_struct *ndpi_str, FILE *fd);
 int load_category_file_fd(struct ndpi_detection_module_struct *ndpi_str,
 			  FILE *fd, ndpi_protocol_category_t category_id);
 
-/* TLS */
+u_int64_t fpc_dns_cache_key_from_dns_info(struct ndpi_flow_struct *flow);
+
+bool ndpi_cache_address(struct ndpi_detection_module_struct *ndpi_struct,
+			ndpi_ip_addr_t ip_addr, char *hostname,
+			u_int32_t epoch_now, u_int32_t ttl);
+
+int is_monitoring_enabled(struct ndpi_detection_module_struct *ndpi_str, int protoId);
+
+  /* TLS */
 int processClientServerHello(struct ndpi_detection_module_struct *ndpi_struct,
                              struct ndpi_flow_struct *flow, uint32_t quic_version);
 void processCertificateElements(struct ndpi_detection_module_struct *ndpi_struct,
@@ -617,11 +657,8 @@ void switch_to_tls(struct ndpi_detection_module_struct *ndpi_struct,
 int is_dtls(const u_int8_t *buf, u_int32_t buf_len, u_int32_t *block_len);
 void switch_extra_dissection_to_tls(struct ndpi_detection_module_struct *ndpi_struct,
 				    struct ndpi_flow_struct *flow);
-
-/* HTTP */
-void http_process_user_agent(struct ndpi_detection_module_struct *ndpi_struct,
-                             struct ndpi_flow_struct *flow,
-                             const u_int8_t *ua_ptr, u_int16_t ua_ptr_len);
+void switch_extra_dissection_to_tls_obfuscated_heur(struct ndpi_detection_module_struct* ndpi_struct,
+                                                    struct ndpi_flow_struct* flow);
 
 /* OOKLA */
 int ookla_search_into_cache(struct ndpi_detection_module_struct* ndpi_struct,
@@ -634,6 +671,7 @@ int quic_len(const uint8_t *buf, uint64_t *value);
 int quic_len_buffer_still_required(uint8_t value);
 int is_version_with_var_int_transport_params(uint32_t version);
 int is_version_with_tls(uint32_t version);
+int is_quic_ver_greater_than(uint32_t version, uint8_t min_version);
 void process_chlo(struct ndpi_detection_module_struct *ndpi_struct,
                   struct ndpi_flow_struct *flow,
                   const u_int8_t *crypto_data, uint32_t crypto_data_len);
@@ -649,7 +687,7 @@ const uint8_t *get_crypto_data(struct ndpi_detection_module_struct *ndpi_struct,
 int is_valid_rtp_payload_type(uint8_t type);
 int is_rtp_or_rtcp(struct ndpi_detection_module_struct *ndpi_struct,
                    const u_int8_t *payload, u_int16_t payload_len, u_int16_t *seq);
-u_int8_t rtp_get_stream_type(u_int8_t payloadType, ndpi_multimedia_flow_type *s_type);
+u_int8_t rtp_get_stream_type(u_int8_t payloadType, u_int8_t *s_type, u_int16_t sub_proto);
 
 /* Bittorrent */
 u_int64_t make_bittorrent_host_key(struct ndpi_flow_struct *flow, int client, int offset);
@@ -662,7 +700,7 @@ int search_into_bittorrent_cache(struct ndpi_detection_module_struct *ndpi_struc
 int is_stun(struct ndpi_detection_module_struct *ndpi_struct,
             struct ndpi_flow_struct *flow,
             u_int16_t *app_proto);
-void switch_extra_dissection_to_stun(struct ndpi_detection_module_struct *ndpi_struct, struct ndpi_flow_struct *flow);
+void switch_extra_dissection_to_stun(struct ndpi_detection_module_struct *ndpi_struct, struct ndpi_flow_struct *flow, int std_callback);
 
 /* TPKT */
 int tpkt_verify_hdr(const struct ndpi_packet_struct * const packet);
@@ -718,6 +756,7 @@ void init_maplestory_dissector(struct ndpi_detection_module_struct *ndpi_struct,
 void init_megaco_dissector(struct ndpi_detection_module_struct *ndpi_struct, u_int32_t *id);
 void init_mgcp_dissector(struct ndpi_detection_module_struct *ndpi_struct, u_int32_t *id);
 void init_mining_dissector(struct ndpi_detection_module_struct *ndpi_struct, u_int32_t *id);
+void init_mikrotik_dissector(struct ndpi_detection_module_struct *ndpi_struct, u_int32_t *id);
 void init_mms_dissector(struct ndpi_detection_module_struct *ndpi_struct, u_int32_t *id);
 void init_monero_dissector(struct ndpi_detection_module_struct *ndpi_struct, u_int32_t *id);
 void init_nats_dissector(struct ndpi_detection_module_struct *ndpi_struct, u_int32_t *id);
@@ -754,6 +793,7 @@ void init_smb_dissector(struct ndpi_detection_module_struct *ndpi_struct, u_int3
 void init_snmp_dissector(struct ndpi_detection_module_struct *ndpi_struct, u_int32_t *id);
 void init_socrates_dissector(struct ndpi_detection_module_struct *ndpi_struct, u_int32_t *id);
 void init_socks_dissector(struct ndpi_detection_module_struct *ndpi_struct, u_int32_t *id);
+void init_sonos_dissector(struct ndpi_detection_module_struct *ndpi_struct, u_int32_t *id);
 void init_spotify_dissector(struct ndpi_detection_module_struct *ndpi_struct, u_int32_t *id);
 void init_ssh_dissector(struct ndpi_detection_module_struct *ndpi_struct, u_int32_t *id);
 void init_tls_dissector(struct ndpi_detection_module_struct *ndpi_struct, u_int32_t *id);
@@ -918,7 +958,17 @@ void init_cod_mobile_dissector(struct ndpi_detection_module_struct *ndpi_struct,
 void init_zug_dissector(struct ndpi_detection_module_struct *ndpi_struct, u_int32_t *id);
 void init_jrmi_dissector(struct ndpi_detection_module_struct *ndpi_struct, u_int32_t *id);
 void init_ripe_atlas_dissector(struct ndpi_detection_module_struct *ndpi_struct, u_int32_t *id);
-
+void init_cloudflare_warp_dissector(struct ndpi_detection_module_struct *ndpi_struct, u_int32_t *id);
+void init_nano_dissector(struct ndpi_detection_module_struct *ndpi_struct, u_int32_t *id);
+void init_openwire_dissector(struct ndpi_detection_module_struct *ndpi_struct, u_int32_t *id);
+void init_cnp_ip_dissector(struct ndpi_detection_module_struct *ndpi_struct, u_int32_t *id);
+void init_atg_dissector(struct ndpi_detection_module_struct *ndpi_struct, u_int32_t *id);
+void init_trdp_dissector(struct ndpi_detection_module_struct *ndpi_struct, u_int32_t *id);
+void init_lustre_dissector(struct ndpi_detection_module_struct *ndpi_struct, u_int32_t *id);
+void init_dingtalk_dissector(struct ndpi_detection_module_struct *ndpi_struct, u_int32_t *id);
+void init_paltalk_dissector(struct ndpi_detection_module_struct *ndpi_struct, u_int32_t *id);
+void init_dicom_dissector(struct ndpi_detection_module_struct *ndpi_struct, u_int32_t *id);
+  
 #endif
 
 #ifdef __cplusplus

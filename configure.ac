@@ -1,4 +1,4 @@
-AC_INIT([libndpi],[4.9.0])
+AC_INIT([libndpi],[4.13.0])
 
 AC_CONFIG_AUX_DIR([.])
 AC_CONFIG_MACRO_DIR([m4])
@@ -30,6 +30,7 @@ AC_ARG_WITH(nbpf-path, AS_HELP_STRING([--with-nbpf-path], [nBPF library custom p
 AC_ARG_WITH(lto-and-gold-linker, AS_HELP_STRING([--with-lto-and-gold-linker], [Build with LTO and Gold linker]))
 AC_ARG_ENABLE(debug-build, AS_HELP_STRING([--enable-debug-build], [Enable debug build (`-g` flag)]),[enable_debugbuild=$enableval],[enable_debugbuild=no])
 AC_ARG_ENABLE(global-context-support, AS_HELP_STRING([--disable-global-context-support], [Disable support for global context. No external dependency on libpthread]))
+AC_ARG_ENABLE(memory-track-origins, AS_HELP_STRING([--disable-memory-track-origins], [Don't add -fsanitize-memory-track-origins flag when compiling with MASAN support. Useful for faster CI]))
 
 NDPI_CFLAGS="${NDPI_CFLAGS} -D_DEFAULT_SOURCE=1 -D_GNU_SOURCE=1"
 
@@ -81,7 +82,10 @@ AS_IF([test "${with_thread_sanitizer+set}" = set],[
 ])
 
 AS_IF([test "${with_memory_sanitizer+set}" = set],[
-  NDPI_CFLAGS="${NDPI_CFLAGS} -fsanitize=memory -fsanitize-memory-track-origins -fno-omit-frame-pointer"
+  NDPI_CFLAGS="${NDPI_CFLAGS} -fsanitize=memory -fno-omit-frame-pointer"
+  AS_IF([test "x$enable_memory_track_origins" != "xno"], [
+    NDPI_CFLAGS="${NDPI_CFLAGS} -fsanitize-memory-track-origins"
+  ])
   NDPI_LDFLAGS="${NDPI_LDFLAGS} -fsanitize=memory"
 ])
 
@@ -186,6 +190,26 @@ echo "Setting API version to ${NDPI_API_VERSION}"
 AC_DEFINE_UNQUOTED(NDPI_GIT_RELEASE, "${GIT_RELEASE}", [GIT Release])
 AC_DEFINE_UNQUOTED(NDPI_GIT_DATE, "${GIT_DATE}", [Last GIT change])
 
+NDPI_CFLAGS="-W -Wall -Wno-address-of-packed-member ${NDPI_CFLAGS}"
+
+dnl> MacOS brew.sh
+HOMEBREW_DIR=/opt/homebrew
+if test -d $HOMEBREW_DIR; then
+ # On latest macOS versions on M* archs, some (all?) libraries are not installed
+ # "system-wide" anymore.
+ NDPI_CFLAGS="${NDPI_CFLAGS} -I ${HOMEBREW_DIR}/include"
+ NDPI_LDFLAGS="${NDPI_LDFLAGS} -L ${HOMEBREW_DIR}/lib"
+
+ # While updating NDPI_CFLAGS/NDPI_LDFLAGS is obvious, we need to update
+ # CFLAGS/LDFLAGS as well, because only these variables are used internally by
+ # autoconf to check for libraries.
+ # The core reason is likely that internally in our Makefiles we use
+ # NDPI_CFLAGS/NDPI_LDFLAGS instead of the standard CFLAGS/LDFLAGS
+ # See: 7c19de49047a5731f3107ff17854e9afe839cc61 for details
+ CFLAGS="${CFLAGS} -I ${HOMEBREW_DIR}/include"
+ LDFLAGS="${LDFLAGS} -L ${HOMEBREW_DIR}/lib"
+fi
+
 if ! test "${with_only_libndpi+set}" = set; then :
     dnl> used by json-c for unit tests
     PKG_CHECK_MODULES([JSONC], [json-c], [
@@ -221,8 +245,6 @@ HANDLE_TLS_SIGS="//"
 AS_IF([test "x${enable_tls_sigs}" = "xyes"],[
   HANDLE_TLS_SIGS=""
 ])
-
-NDPI_CFLAGS="-W -Wall -Wno-address-of-packed-member ${NDPI_CFLAGS}"
 
 AS_IF([test "${with_lto_and_gold_linker+set}" = set], [
        NDPI_CFLAGS="${NDPI_CFLAGS} -flto -fuse-ld=gold -Wno-unused-command-line-argument"

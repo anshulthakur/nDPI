@@ -82,6 +82,15 @@ Notes:
 - IPv6 is not supported
 
 
+.. _Proto 174:
+
+`NDPI_PROTOCOL_RTMP`
+====================
+Real-Time Messaging Protocol (RTMP) is a communication protocol for streaming audio, video, and data over the Internet.
+
+References: `Wikipedia <https://en.wikipedia.org/wiki/Real-Time_Messaging_Protocol>`_
+
+
 .. _Proto 182:
 
 `NDPI_PROTOCOL_RESP`
@@ -856,3 +865,229 @@ References:  `Oracle site <https://docs.oracle.com/en/java/javase/21/docs/specs/
 The RIPE Atlas probe protocol is used for the world's largest active Internet measurement network.
 
 References: `Main Site <https://atlas.ripe.net/>`_ and `Documentation <https://ripe-atlas-tools.readthedocs.io/en/latest/index.html>`_
+
+
+.. _Proto 418:
+
+`NDPI_PROTOCOL_HLS`
+=====================
+HTTP Live Streaming (HLS) is an adaptive bitrate streaming communications protocol developed by Apple Inc. It allows for the delivery of media content over the internet by breaking the stream into small segments and adjusting the quality of the stream in real time based on the viewer's network conditions.
+
+References: `RFC <https://datatracker.ietf.org/doc/html/rfc8216>`_
+
+
+.. _Proto 419:
+
+`NDPI_PROTOCOL_CLICKHOUSE`
+======================
+ClickHouse is an open-source columnar database management system designed for online analytical processing (OLAP) of queries.
+
+References: `Main site: <https://clickhouse.com/>`_
+
+
+.. _Proto 420:
+
+`NDPI_PROTOCOL_NANO`
+======================
+Nano (XNO) is a decentralized, open-source cryptocurrency that focuses on delivering fast, fee-less, and eco-friendly transactions through its unique block-lattice structure.
+
+References: `Main site: <https://nano.org/>`_
+
+
+.. _Proto 421:
+
+`NDPI_PROTOCOL_OPENWIRE`
+======================
+OpenWire is a wire protocol used by Apache ActiveMQ for communication between clients and brokers, providing an efficient and flexible messaging framework. While it's not the most popular choice compared to other protocols like AMQP or MQTT, it is still utilized in scenarios where ActiveMQ is heavily integrated.
+
+References: `Main site: <https://activemq.apache.org/components/classic/documentation/openwire>`_
+
+
+.. _Proto 422:
+
+`NDPI_PROTOCOL_CNP_IP`
+=====================
+ISO/IEC 14908-4 specifies how to tunnel LonWorks control network protocol packets over IP networks. It enables encapsulation of the LonTalk protocol within UDP or TCP packets for transmission across IP-based networks.
+
+References: `Paid Specs: <https://www.iso.org/standard/60206.html>`_
+
+
+.. _Proto 423:
+
+`NDPI_PROTOCOL_ATG`
+===================
+This protocol is used to transfer data between the various components of an ATG (Automatic Tank Gauge) system.
+
+References: `Protocol Specs: <https://github.com/Orange-Cyberdefense/awesome-industrial-protocols/blob/main/protocols/atg.md>`_
+
+
+.. _Proto 424:
+
+`NDPI_PROTOCOL_TRDP`
+===================
+The Train Real Time Data Protocol (TRDP) is a UDP/TCP-based communication protocol designed for IP networks in trains, enabling data exchange between devices such as door controls and air conditioning systems. 
+It is standardized by the IEC under IEC 61375-2-3 and is not related to the Remote Desktop Protocol (RDP).
+
+References: `Protocol Specs: <https://www.typhoon-hil.com/documentation/typhoon-hil-software-manual/References/iec_61375_trdp_protocol.html>`_
+
+
+.. _Proto 425:
+
+`NDPI_PROTOCOL_LUSTRE`
+======================
+Lustre is a high-performance, parallel distributed file system designed for large-scale computing environments. It is widely used in supercomputing and enterprise storage systems due to its ability to handle massive amounts of data and provide high-speed I/O operations across numerous nodes.
+
+References: `Main site: <https://www.lustre.org/>`_
+
+
+.. _Proto 426:
+
+`NDPI_PROTOCOL_NORDVPN`
+======================
+NordVPN is a VPN service.
+
+References: `Main site: <https://nordvpn.com>`_
+
+
+.. _Proto 427:
+
+`NDPI_PROTOCOL_SURFSHARK`
+========================
+Surfshark is a brand of VPN services offered by the Netherlands-based company Surfshark B.V.
+
+References: `Main site: <https://surfshark.com/>`_
+
+
+.. _Proto 428:
+
+`NDPI_PROTOCOL_CACTUSVPN`
+========================
+CactusVPN is a VPN service.
+
+References: `Main site: <https://cactusvpn.com/>`_
+
+
+.. _Proto 429:
+
+`NDPI_PROTOCOL_WINDSCRIBE`
+=========================
+Windscribe is a commercial, cross-platform virtual private network (VPN) service provider based in Canada.
+
+References: `Main site: <https://windscribe.com/>`_
+
+
+.. _Proto 430:
+
+`NDPI_PROTOCOL_SONOS`
+=========================
+Sonos is a company that provides high-quality, wireless sound systems allowing users to stream audio through a variety of speakers seamlessly throughout their home.
+
+References: `Main site: <https://www.sonos.com/>`_
+
+
+.. _Proto 431:
+
+`NDPI_PROTOCOL_DINGTALK`
+=========================
+DingTalk is a versatile communication and collaboration platform developed by Alibaba Group.
+
+References: `Main site: <https://www.dingtalk.com/en>`_
+
+
+.. _Proto 432:
+
+`NDPI_PROTOCOL_PALTALK`
+=========================
+Paltalk is a video chat and instant messaging application that allows users to communicate through video, voice, and text in chat rooms.
+
+References: `Main site: <https://www.paltalk.com/>`_
+
+
+.. _Proto 433:
+
+`NDPI_PROTOCOL_NAVER`
+=========================
+Naver is South Korea's largest search engine and online platform that offers various services including web search, email, news, shopping, cloud storage, maps, and social media features.
+
+References: `Main site: <https://www.naver.com/>`_
+
+
+.. _Proto 434:
+
+`NDPI_PROTOCOL_SHEIN`
+=====================
+Shein is a fast fashion retailer.
+
+References: `Main site <https://www.shein.com/>`_
+
+
+.. _Proto 435:
+
+`NDPI_PROTOCOL_TEMU`
+====================
+Temu is an online marketplace operated by the Chinese e-commerce company PDD Holdings.
+
+References: `Main site <https://www.temu.com/>`_
+
+
+.. _Proto 436:
+
+`NDPI_PROTOCOL_TAOBAO`
+======================
+Taobao is a Chinese online shopping platform.
+
+References: `Main site <https://www.taobao.com/>`_
+
+
+.. _Proto 437:
+
+`NDPI_PROTOCOL_MIKROTIK`
+========================
+MikroTik Neighbor Discovery Protocol, is a protocol that allows us to find neighbor routers/switches which are compatible with the following neighboring protocols: MNDP: MikroTik Proprietary. CDP: Cisco Proprietary.
+
+References: `Main site <https://help.mikrotik.com/docs/spaces/ROS/pages/24805517/Neighbor+discovery/>`_
+
+
+.. _Proto 438:
+
+`NDPI_PROTOCOL_DICOM`
+=====================
+Digital Imaging and Communications in Medicine (DICOM) is a technical standard for the digital storage and transmission of medical images and related information.
+
+References: `Wikipwdia <https://en.wikipedia.org/wiki/DICOM/>`_
+
+
+.. _Proto 439:
+
+`NDPI_PROTOCOL_PARAMOUNTPLUS`
+=============================
+Paramount+ (formerly CBS All Access and 10 All Access in Australia until 2021) is an American subscription video on-demand over-the-top streaming service owned by Paramount Global.
+
+References: `Main site <https://www.paramountplus.com/>`_
+
+
+.. _Proto 440:
+
+`NDPI_PROTOCOL_YANDEX_ALICE`
+============================
+Yandex Alice is a voice assistant developed by Yandex, providing answers, performing tasks, and supporting smart home integration, similar to Alexa or Google Assistant.
+
+References: `Main site <https://yandex.ru/dev/dialogs/alice/doc/ru/protocol/>`_
+
+
+.. _Proto 441:
+
+`NDPI_PROTOCOL_VIVOX`
+=====================
+Vivox is a voice and text chat technology platform that provides real-time communication solutions for online games and applications.
+
+References: `Main site <https://unity.com/products/vivox-voice-chat>`_
+
+
+.. _Proto 442:
+
+`NDPI_PROTOCOL_DIGITALOCEAN`
+============================
+DigitalOcean is a cloud service provider.
+
+References: `Main site <https://www.digitalocean.com/>`_

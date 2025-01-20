@@ -22,8 +22,8 @@
  */
 
 
-#ifndef __NDPI_PROTOCOLS_IDS_H__
-#define __NDPI_PROTOCOLS_IDS_H__
+#ifndef __NDPI_PROTOCOL_IDS_H__
+#define __NDPI_PROTOCOL_IDS_H__
 
 #define NDPI_PROTOCOL_SIZE                  2
 
@@ -408,7 +408,7 @@ typedef enum {
   NDPI_PROTOCOL_APACHE_KAFKA          = 377,
   NDPI_PROTOCOL_NOMACHINE             = 378,
   NDPI_PROTOCOL_IEC62056              = 379,
-  NDPI_PROTOCOL_HL7                   = 380,
+  NDPI_PROTOCOL_HL7                   = 380, /* Hospital Protocol */
   NDPI_PROTOCOL_CEPH                  = 381,
   NDPI_PROTOCOL_GOOGLE_CHAT           = 382,
   NDPI_PROTOCOL_ROUGHTIME             = 383,
@@ -446,6 +446,31 @@ typedef enum {
   NDPI_PROTOCOL_ZUG                   = 415,
   NDPI_PROTOCOL_JRMI                  = 416, 
   NDPI_PROTOCOL_RIPE_ATLAS            = 417,
+  NDPI_PROTOCOL_HLS                   = 418,
+  NDPI_PROTOCOL_CLICKHOUSE            = 419,
+  NDPI_PROTOCOL_NANO                  = 420,
+  NDPI_PROTOCOL_OPENWIRE              = 421,
+  NDPI_PROTOCOL_CNP_IP                = 422,
+  NDPI_PROTOCOL_ATG                   = 423,
+  NDPI_PROTOCOL_TRDP                  = 424,
+  NDPI_PROTOCOL_LUSTRE                = 425,
+  NDPI_PROTOCOL_NORDVPN               = 426,
+  NDPI_PROTOCOL_SURFSHARK             = 427,
+  NDPI_PROTOCOL_CACTUSVPN             = 428,
+  NDPI_PROTOCOL_WINDSCRIBE            = 429,
+  NDPI_PROTOCOL_SONOS                 = 430,
+  NDPI_PROTOCOL_DINGTALK              = 431,
+  NDPI_PROTOCOL_PALTALK               = 432,
+  NDPI_PROTOCOL_NAVER                 = 433,
+  NDPI_PROTOCOL_SHEIN                 = 434,
+  NDPI_PROTOCOL_TEMU                  = 435,
+  NDPI_PROTOCOL_TAOBAO                = 436,
+  NDPI_PROTOCOL_MIKROTIK              = 437,
+  NDPI_PROTOCOL_DICOM                 = 438, /* Hospital Protocol */
+  NDPI_PROTOCOL_PARAMOUNTPLUS         = 439,
+  NDPI_PROTOCOL_YANDEX_ALICE          = 440,
+  NDPI_PROTOCOL_VIVOX                 = 441,
+  NDPI_PROTOCOL_DIGITALOCEAN          = 442,
 
 #ifdef CUSTOM_NDPI_PROTOCOLS
 #include "../../../nDPI-custom/custom_ndpi_protocol_ids.h"

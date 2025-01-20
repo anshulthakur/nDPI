@@ -45,16 +45,16 @@ void fuzz_init_detection_module(struct ndpi_detection_module_struct **ndpi_info_
     ndpi_set_config_u64(*ndpi_info_mod, NULL, "log.level", 3);
     ndpi_set_config(*ndpi_info_mod, "all", "log", "enable");
 
+    NDPI_BITMASK_SET_ALL(all);
+    ndpi_set_protocol_detection_bitmask2(*ndpi_info_mod, &all);
+
     ndpi_load_domain_suffixes(*ndpi_info_mod, "public_suffix_list.dat");
     ndpi_load_categories_dir(*ndpi_info_mod, "./lists/");
     ndpi_load_protocols_file(*ndpi_info_mod, "protos.txt");
     ndpi_load_categories_file(*ndpi_info_mod, "categories.txt", NULL);
     ndpi_load_risk_domain_file(*ndpi_info_mod, "risky_domains.txt");
-    ndpi_load_malicious_ja3_file(*ndpi_info_mod, "ja3_fingerprints.csv");
+    ndpi_load_malicious_ja4_file(*ndpi_info_mod, "ja4_fingerprints.csv");
     ndpi_load_malicious_sha1_file(*ndpi_info_mod, "sha1_fingerprints.csv");
-
-    NDPI_BITMASK_SET_ALL(all);
-    ndpi_set_protocol_detection_bitmask2(*ndpi_info_mod, &all);
 
     ndpi_set_config(*ndpi_info_mod, NULL, "filename.config", "config.txt");
 

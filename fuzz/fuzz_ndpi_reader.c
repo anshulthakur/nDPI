@@ -8,6 +8,10 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#ifdef ENABLE_PCAP_L7_MUTATOR
+#include "pl7m.h"
+#endif
+
 struct ndpi_workflow_prefs *prefs = NULL;
 struct ndpi_workflow *workflow = NULL;
 struct ndpi_global_context *g_ctx;
@@ -17,11 +21,22 @@ u_int8_t enable_flow_stats = 1;
 u_int8_t human_readeable_string_len = 5;
 u_int8_t max_num_udp_dissected_pkts = 0, max_num_tcp_dissected_pkts = 0; /* Disable limits at application layer */;
 int malloc_size_stats = 0;
+FILE *fingerprint_fp = NULL;
+bool do_load_lists = false;
+char *addr_dump_path = NULL;
+int monitoring_enabled = 0;
 
 extern void ndpi_report_payload_stats(FILE *out);
 
 #ifdef CRYPT_FORCE_NO_AESNI
 extern int force_no_aesni;
+#endif
+
+#ifdef ENABLE_PCAP_L7_MUTATOR
+size_t LLVMFuzzerCustomMutator(uint8_t *Data, size_t Size,
+                               size_t MaxSize, unsigned int Seed) {
+  return pl7m_mutator(Data, Size, MaxSize, Seed);
+}
 #endif
 
 int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
@@ -63,7 +78,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
     ndpi_load_protocols_file(workflow->ndpi_struct, "protos.txt");
     ndpi_load_categories_file(workflow->ndpi_struct, "categories.txt", NULL);
     ndpi_load_risk_domain_file(workflow->ndpi_struct, "risky_domains.txt");
-    ndpi_load_malicious_ja3_file(workflow->ndpi_struct, "ja3_fingerprints.csv");
+    ndpi_load_malicious_ja4_file(workflow->ndpi_struct, "ja4_fingerprints.csv");
     ndpi_load_malicious_sha1_file(workflow->ndpi_struct, "sha1_fingerprints.csv");
 
     // enable all protocols
@@ -74,9 +89,16 @@ int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
     ndpi_set_config(workflow->ndpi_struct, NULL, "flow.track_payload", "1");
     ndpi_set_config(workflow->ndpi_struct, NULL, "tcp_ack_payload_heuristic", "1");
     ndpi_set_config(workflow->ndpi_struct, "tls", "application_blocks_tracking", "1");
-    ndpi_set_config(workflow->ndpi_struct, "stun", "max_packets_extra_dissection", "255");
+    ndpi_set_config(workflow->ndpi_struct, "stun", "max_packets_extra_dissection", "40");
     ndpi_set_config(workflow->ndpi_struct, "zoom", "max_packets_extra_dissection", "255");
     ndpi_set_config(workflow->ndpi_struct, "rtp", "search_for_stun", "1");
+    ndpi_set_config(workflow->ndpi_struct, "openvpn", "dpi.heuristics", "0x01");
+    ndpi_set_config(workflow->ndpi_struct, "openvpn", "dpi.heuristics.num_messages", "20");
+    ndpi_set_config(workflow->ndpi_struct, "tls", "metadata.ja4r_fingerprint", "1");
+    ndpi_set_config(workflow->ndpi_struct, "tls", "dpi.heuristics", "0x07");
+    ndpi_set_config(workflow->ndpi_struct, "tls", "dpi.heuristics.max_packets_extra_dissection", "40");
+    ndpi_set_config(workflow->ndpi_struct, "stun", "monitoring", "1");
+    ndpi_set_config(workflow->ndpi_struct, NULL, "dpi.address_cache_size", "8192");
 
     ndpi_finalize_initialization(workflow->ndpi_struct);
 

@@ -69,11 +69,6 @@ extern "C" {
   extern char *ndpi_get_ip_string(const ndpi_ip_addr_t * ip, char *buf, u_int buf_len);
   extern u_int8_t ndpi_is_ipv6(const ndpi_ip_addr_t *ip);
 
-  extern char* ndpi_get_proto_by_id(struct ndpi_detection_module_struct *ndpi_mod, u_int id);
-  u_int16_t ndpi_get_proto_by_name(struct ndpi_detection_module_struct *ndpi_mod, const char *name);
-
-  extern u_int8_t ndpi_is_proto(ndpi_protocol proto, u_int16_t p);
-
   extern void ndpi_search_tcp_or_udp(struct ndpi_detection_module_struct *ndpi_struct, struct ndpi_flow_struct *flow);
 
   /** Checks when the @p payload starts with the string literal @p str.
@@ -98,8 +93,8 @@ extern "C" {
 			       ndpi_protocol_category_t protoCategory,
 			       ndpi_port_range *tcpDefPorts,
 			       ndpi_port_range *udpDefPorts);
-  void ndpi_set_risk(struct ndpi_flow_struct *flow, ndpi_risk_enum r,
-		     char *risk_message);
+  void ndpi_set_risk(struct ndpi_detection_module_struct *ndpi_str, struct ndpi_flow_struct *flow,
+                     ndpi_risk_enum r, char *risk_message);
   void ndpi_unset_risk(struct ndpi_flow_struct *flow, ndpi_risk_enum r);
   int ndpi_isset_risk(struct ndpi_flow_struct *flow, ndpi_risk_enum r);
   int ndpi_is_printable_buffer(u_int8_t const * const buf, size_t len);
@@ -113,7 +108,7 @@ extern "C" {
 #define NDPI_ENTROPY_ENCRYPTED_OR_RANDOM(entropy) (entropy >= 7.312f)
   float ndpi_entropy(u_int8_t const * const buf, size_t len);
   char *ndpi_entropy2str(float entropy, char *buf, size_t len);
-  void ndpi_entropy2risk(struct ndpi_flow_struct *flow);
+  void ndpi_entropy2risk(struct ndpi_detection_module_struct *ndpi_struct, struct ndpi_flow_struct *flow);
 
 #ifdef __cplusplus
 }

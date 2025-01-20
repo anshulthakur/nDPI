@@ -1,4 +1,4 @@
-#/bin/bash
+#!/usr/bin/env bash
 
 cd "$(dirname "${0}")" || exit 1
 
@@ -29,6 +29,12 @@ RETVAL=$(( RETVAL + $? ))
 ./icloud_private_relay_ip_addresses_download.sh
 RETVAL=$(( RETVAL + $? ))
 ./crawlers_ip_addresses_download.sh
+RETVAL=$(( RETVAL + $? ))
+./nordvpn_ip_addresses_download.sh
+RETVAL=$(( RETVAL + $? ))
+./surfshark_ip_addresses_download.sh
+RETVAL=$(( RETVAL + $? ))
+./digitalocean_ip_addresses_download.sh
 RETVAL=$(( RETVAL + $? ))
 
 ./asn_update.sh
